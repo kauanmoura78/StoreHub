@@ -1,0 +1,8 @@
+{
+  "name": "StoreHub - Premium Digital Marketplace",
+  "description": "A professional and modern digital marketplace for premium contents, featuring AI-powered assistance, secure cart management, and advanced administrative tools.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
