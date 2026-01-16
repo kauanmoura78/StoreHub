@@ -27,25 +27,41 @@ const Notification: React.FC<{ toast: Toast; onClose: (id: string) => void }> = 
 const App: React.FC = () => {
   const [theme, setTheme] = useState<ThemeMode>('dark');
   
-  // Persistence initialization
+  // Safe Persistence initialization to prevent crashes
   const [registeredUsers, setRegisteredUsers] = useState<User[]>(() => {
-    const saved = localStorage.getItem('sh_users');
-    return saved ? JSON.parse(saved) : [{ id: 'admin-id', name: 'Administrador', email: 'admin', password: '0110', isAdmin: true }];
+    try {
+      const saved = localStorage.getItem('sh_users');
+      return saved ? JSON.parse(saved) : [{ id: 'admin-id', name: 'Administrador', email: 'admin', password: '0110', isAdmin: true }];
+    } catch {
+      return [{ id: 'admin-id', name: 'Administrador', email: 'admin', password: '0110', isAdmin: true }];
+    }
   });
   
   const [user, setUser] = useState<User | null>(() => {
-    const saved = localStorage.getItem('sh_current_user');
-    return saved ? JSON.parse(saved) : null;
+    try {
+      const saved = localStorage.getItem('sh_current_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
   });
 
   const [products, setProducts] = useState<Product[]>(() => {
-    const saved = localStorage.getItem('sh_products');
-    return saved ? JSON.parse(saved) : [];
+    try {
+      const saved = localStorage.getItem('sh_products');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
   });
 
   const [cart, setCart] = useState<CartItem[]>(() => {
-    const saved = localStorage.getItem('sh_cart');
-    return saved ? JSON.parse(saved) : [];
+    try {
+      const saved = localStorage.getItem('sh_cart');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
   });
 
   const [activeCategory, setActiveCategory] = useState<CategoryType>('all');
@@ -60,7 +76,6 @@ const App: React.FC = () => {
   const productSectionRef = useRef<HTMLDivElement>(null);
   const categorySectionRef = useRef<HTMLDivElement>(null);
 
-  // Persistence Effects
   useEffect(() => {
     document.body.className = theme;
   }, [theme]);
@@ -82,10 +97,7 @@ const App: React.FC = () => {
     localStorage.setItem('sh_cart', JSON.stringify(cart));
   }, [cart]);
 
-  // Helper para cores dinâmicas baseadas no tema
-  const themeColor = theme === 'dark' ? '#00ff88' : '#ff5e00'; // Verde Neon vs Laranja Neon
   const themeText = theme === 'dark' ? 'text-[#00ff88]' : 'text-[#ff5e00]';
-  const themeBorder = theme === 'dark' ? 'border-[#00ff88]' : 'border-[#ff5e00]';
   const themeBg = theme === 'dark' ? 'bg-[#00ff88]' : 'bg-[#ff5e00]';
 
   const addToast = (message: string, type: Toast['type'] = 'success') => {
@@ -403,7 +415,7 @@ const App: React.FC = () => {
                               setEditingProduct(p); 
                               setActiveModal('productForm'); 
                             }}
-                            className={`p-2 rounded-full border-2 transition-all hover:scale-110 shadow-lg cursor-pointer ${theme === 'dark' ? 'bg-black/90 border-[#00ff88] text-[#00ff88] hover:bg-[#00ff88] hover:text-[#002b1b]' : 'bg-white border-[#ff5e00] text-[#ff5e00] hover:bg-[#ff5e00] hover:text-white'}`}
+                            className={`p-2 rounded-full border-2 transition-all hover:scale-110 shadow-lg cursor-pointer ${theme === 'dark' ? 'bg-black/90 border-[#00ff88] text-[#002b1b] shadow-lg' : 'bg-white border-[#ff5e00] text-[#ff5e00] shadow-lg'}`}
                           >
                             <Icons.Edit className="w-4 h-4 pointer-events-none" />
                           </button>
@@ -473,7 +485,7 @@ const App: React.FC = () => {
                               setEditingProduct(p); 
                               setActiveModal('productForm'); 
                             }}
-                            className={`p-2 rounded-full border-2 transition-all hover:scale-110 shadow-lg cursor-pointer ${theme === 'dark' ? 'bg-black/90 border-[#00ff88] text-[#00ff88] hover:bg-[#00ff88] hover:text-[#002b1b]' : 'bg-white border-[#ff5e00] text-[#ff5e00] hover:bg-[#ff5e00] hover:text-white'}`}
+                            className={`p-2 rounded-full border-2 transition-all hover:scale-110 shadow-lg cursor-pointer ${theme === 'dark' ? 'bg-black/90 border-[#00ff88] text-[#002b1b] shadow-lg' : 'bg-white border-[#ff5e00] text-[#ff5e00] shadow-lg'}`}
                           >
                             <Icons.Edit className="w-4 h-4 pointer-events-none" />
                           </button>
@@ -756,8 +768,6 @@ const CartModal = ({theme, cart, setCart, onCheckout}: any) => {
 };
 
 const ProductDetailsView = ({theme, product, onAdd}: any) => {
-  const themeText = theme === 'dark' ? 'text-[#00ff88]' : 'text-[#ff5e00]';
-
   return (
     <div className="animate-fade-in py-2">
       <div className={`relative aspect-[16/9] rounded-[1.5rem] md:rounded-[2.5rem] flex items-center justify-center overflow-hidden mb-6 md:mb-8 border-2 transition-all duration-1000 hover:scale-[1.01] ${theme === 'dark' ? 'bg-zinc-950 border-[#00ff88]/40 shadow-[0_0_60px_rgba(0,255,136,0.1)]' : 'bg-white border-[#ff5e00]/40 shadow-[0_0_60px_rgba(255,94,0,0.15)]'}`}>
@@ -795,7 +805,6 @@ const ChatModal = ({theme, products}: any) => {
   const [m, setM] = useState('');
   const [h, setH] = useState<{r:'u'|'ai', t:string}[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const themeText = theme === 'dark' ? 'text-[#00ff88]' : 'text-[#ff5e00]';
 
   useEffect(() => {
     if(scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -844,7 +853,7 @@ const HowItWorksView = ({theme}: any) => {
   );
 };
 
-const ProductForm = ({theme, product, onSave, onDelete}: any) => {
+const ProductForm = ({theme, product, onSave}: any) => {
   const [d, setD] = useState(product || { 
     name:'', 
     seller:'StoreHub Official', 
