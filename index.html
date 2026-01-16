@@ -58,7 +58,6 @@
       background-attachment: fixed;
     }
     
-    /* No light mode, removemos o radial gradient para ficar sólido e limpo */
     body.light .gradient-bg {
       background: var(--bg-color);
     }
@@ -84,7 +83,7 @@
       box-shadow: 0 10px 25px var(--glow-color);
       transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
-    body.dark .btn-primary { color: #002b1b; } /* Contraste para o verde */
+    body.dark .btn-primary { color: #002b1b; }
 
     .btn-primary:hover {
       background: var(--hub-gradient-hover);
@@ -111,7 +110,6 @@
     }
     @keyframes shrink { from { width: 100%; } to { width: 0%; } }
 
-    /* Custom Scrollbar Global */
     ::-webkit-scrollbar { width: 8px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { 
@@ -119,7 +117,6 @@
       border-radius: 20px;
     }
 
-    /* Brilho Animado Refinado */
     .shimmer {
       position: relative;
       overflow: hidden;
@@ -155,6 +152,10 @@
       50% { filter: drop-shadow(0 0 20px var(--glow-color)); }
     }
   </style>
+  <script>
+    // Polyfill para evitar que o site quebre em hospedagens estáticas (como GitHub Pages)
+    window.process = window.process || { env: {} };
+  </script>
   <script type="importmap">
   {
     "imports": {
@@ -168,5 +169,7 @@
 </head>
 <body class="dark">
   <div id="root"></div>
+  <!-- Garantindo o carregamento do módulo principal -->
+  <script type="module" src="./index.tsx"></script>
 </body>
 </html>
