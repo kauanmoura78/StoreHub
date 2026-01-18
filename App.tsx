@@ -1,10 +1,26 @@
-
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   Product, User, CartItem, ThemeMode, CategoryType, Toast 
 } from './types';
 import { Icons } from './constants';
 import { geminiService } from './services/geminiService';
+
+// --- Fictional Initial Product ---
+const INITIAL_PRODUCT: Product = {
+  id: 'fictional-1',
+  name: 'Neural Link Core - Phantom Edition',
+  seller: 'Cyberdyne Systems',
+  category: 'services',
+  price: 299.90,
+  originalPrice: 450.00,
+  rating: 4.9,
+  sales: 1250,
+  imageEmoji: 'Shield',
+  description: 'Otimize sua largura de banda neural com o Phantom Edition. Este núcleo oferece latência zero para transações no ecossistema StoreHub e criptografia de ponta a ponta. Edição limitada para membros certificados.',
+  verified: true,
+  outOfStock: false,
+  createdAt: new Date().toISOString()
+};
 
 // --- Components ---
 
@@ -27,7 +43,6 @@ const Notification: React.FC<{ toast: Toast; onClose: (id: string) => void }> = 
 const App: React.FC = () => {
   const [theme, setTheme] = useState<ThemeMode>('dark');
   
-  // Safe Persistence initialization to prevent crashes
   const [registeredUsers, setRegisteredUsers] = useState<User[]>(() => {
     try {
       const saved = localStorage.getItem('sh_users');
@@ -49,9 +64,13 @@ const App: React.FC = () => {
   const [products, setProducts] = useState<Product[]>(() => {
     try {
       const saved = localStorage.getItem('sh_products');
-      return saved ? JSON.parse(saved) : [];
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return parsed.length > 0 ? parsed : [INITIAL_PRODUCT];
+      }
+      return [INITIAL_PRODUCT];
     } catch {
-      return [];
+      return [INITIAL_PRODUCT];
     }
   });
 
@@ -138,6 +157,10 @@ const App: React.FC = () => {
       default:
         return 'max-w-lg md:max-w-4xl'; 
     }
+  };
+
+  const formatPrice = (value: number) => {
+    return value.toFixed(2).replace('.', ',');
   };
 
   return (
@@ -231,7 +254,7 @@ const App: React.FC = () => {
                     {user.profilePhotoUrl || user.profilePhotoData ? <img src={user.profilePhotoUrl || user.profilePhotoData} className="w-full h-full object-cover" /> : user.name[0]}
                   </div>
                   <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider max-w-[80px] truncate">{user.name.split(' ')[0]}</span>
-                  {user.isAdmin && <span className={`text-[9px] font-black px-1.5 py-0.5 rounded bg-opacity-20 ${theme === 'dark' ? 'bg-[#00ff88] text-[#00ff88]' : 'bg-[#ff5e00] text-[#ff5e00]'}`}>ADM</span>}
+                  {user.isAdmin && <span className={`text-[9px] font-black px-1.5 py-0.5 rounded bg-opacity-20 ${theme === 'dark' ? 'bg-[#00ff88] text-[#002b1b]' : 'bg-[#ff5e00] text-[#ff5e00]'}`}>ADM</span>}
                 </button>
               ) : (
                 <div className="flex items-center gap-3">
@@ -374,11 +397,11 @@ const App: React.FC = () => {
                       
                       <div className="flex items-center justify-between mb-6 md:mb-8">
                         <div className="flex flex-col">
-                          <span className="text-[9px] uppercase font-black opacity-20 tracking-[0.4em] mb-1">Custo Hub</span>
+                          <span className="text-[9px] uppercase font-black opacity-20 tracking-[0.4em] mb-1">Valor</span>
                           <div className="flex items-baseline gap-2">
-                            <span className={`text-xl sm:text-2xl md:text-3xl font-black font-grotesk text-glow ${p.outOfStock ? 'opacity-50' : ''}`}>R$ {p.price.toFixed(2)}</span>
+                            <span className={`text-xl sm:text-2xl md:text-3xl font-black font-grotesk text-glow ${p.outOfStock ? 'opacity-50' : ''}`}>R$ {formatPrice(p.price)}</span>
                             {p.originalPrice && p.originalPrice > p.price && (
-                              <span className="text-xs text-zinc-500 line-through font-bold">R$ {p.originalPrice.toFixed(2)}</span>
+                              <span className="text-xs text-zinc-500 line-through font-bold">R$ {formatPrice(p.originalPrice)}</span>
                             )}
                           </div>
                         </div>
@@ -392,7 +415,7 @@ const App: React.FC = () => {
                           }} 
                           className={`p-4 md:p-5 rounded-2xl transition-all hover:scale-110 active:scale-90 shadow-xl ${p.outOfStock ? 'bg-zinc-500 cursor-not-allowed opacity-50' : (theme === 'dark' ? 'bg-[#00ff88] text-[#002b1b] shadow-[0_0_25px_rgba(0,255,136,0.3)]' : 'bg-[#ff5e00] text-white shadow-[0_10px_20px_rgba(255,94,0,0.3)]')}`}
                         >
-                          <Icons.Cart className="w-5 h-5 md:w-6.5 md:h-6.5" />
+                          <Icons.Cart className="w-5 h-5 md:w-6 md:h-6" />
                         </button>
                       </div>
                       
@@ -401,7 +424,7 @@ const App: React.FC = () => {
                         onClick={() => { setSelectedProduct(p); setActiveModal('details'); }} 
                         className={`w-full py-4 md:py-5 rounded-[1.5rem] md:rounded-[1.8rem] font-black uppercase text-[10px] md:text-[11px] tracking-[0.3em] border-2 transition-all ${p.outOfStock ? 'border-zinc-500 text-zinc-500 cursor-not-allowed bg-transparent hover:bg-transparent opacity-50' : (theme === 'dark' ? 'bg-white/5 border-white/10 hover:bg-[#00ff88]/15 hover:border-[#00ff88]/60 text-white' : 'bg-zinc-50 border-zinc-200 hover:bg-[#ff5e00]/10 hover:border-[#ff5e00]/50 text-zinc-700 hover:text-[#ff5e00]')}`}
                       >
-                        {p.outOfStock ? 'Indisponível' : 'Dossiê Completo'}
+                        {p.outOfStock ? 'Indisponível' : 'Ver Detalhes'}
                       </button>
 
                       {user?.isAdmin && (
@@ -461,9 +484,9 @@ const App: React.FC = () => {
                     </div>
                     <h4 className={`text-lg md:text-2xl font-black truncate uppercase tracking-tighter mb-3 md:mb-4 ${theme === 'dark' ? 'text-white' : 'text-zinc-900'} ${p.outOfStock ? 'line-through opacity-50' : ''}`}>{p.name}</h4>
                     <div className="flex flex-col mb-8 md:mb-10">
-                      <span className={`font-black text-2xl md:text-3xl text-glow ${p.outOfStock ? 'opacity-50' : ''}`}>R$ {p.price.toFixed(2)}</span>
+                      <span className={`font-black text-2xl md:text-3xl text-glow ${p.outOfStock ? 'opacity-50' : ''}`}>R$ {formatPrice(p.price)}</span>
                       {p.originalPrice && p.originalPrice > p.price && (
-                        <span className="text-xs text-zinc-500 line-through font-bold">R$ {p.originalPrice.toFixed(2)}</span>
+                        <span className="text-xs text-zinc-500 line-through font-bold">R$ {formatPrice(p.originalPrice)}</span>
                       )}
                     </div>
                     <button 
@@ -471,7 +494,7 @@ const App: React.FC = () => {
                       onClick={() => { setSelectedProduct(p); setActiveModal('details'); }} 
                       className={`w-full py-5 md:py-6 rounded-[1.8rem] btn-primary uppercase font-black text-xs md:text-sm tracking-[0.4em] shadow-2xl shimmer ${p.outOfStock ? 'bg-zinc-500 cursor-not-allowed opacity-50' : ''}`}
                     >
-                      {p.outOfStock ? 'Indisponível' : 'Ver Ativo'}
+                      {p.outOfStock ? 'Indisponível' : 'Ver Detalhes'}
                     </button>
 
                     {user?.isAdmin && (
@@ -582,7 +605,7 @@ const App: React.FC = () => {
               {activeModal === 'details' && selectedProduct && <ProductDetailsView theme={theme} product={selectedProduct} onAdd={() => {
                 if(!user) { setActiveModal('login'); addToast('Sync Hub Requerido', 'error'); return; }
                 setCart(prev => [...prev, {product: selectedProduct, quantity: 1}]);
-                addToast('Alocado!');
+                addToast('Alocado ao carrinho!');
                 setActiveModal(null);
               }} />}
             </div>
@@ -724,6 +747,10 @@ const ProfileModal = ({theme, user, onUpdate, onLogout}: any) => {
 const CartModal = ({theme, cart, setCart, onCheckout}: any) => {
   const total = cart.reduce((a:any, b:any) => a + (b.product.price * b.quantity), 0);
   const themeText = theme === 'dark' ? 'text-[#00ff88]' : 'text-[#ff5e00]';
+
+  const formatPrice = (value: number) => {
+    return value.toFixed(2).replace('.', ',');
+  };
   
   return (
     <div className="space-y-8 md:space-y-12 py-2 animate-fade-in">
@@ -746,7 +773,7 @@ const CartModal = ({theme, cart, setCart, onCheckout}: any) => {
                 <div className="flex-1">
                   <h4 className={`font-black text-sm md:text-2xl uppercase tracking-tighter transition-colors line-clamp-1 ${theme === 'dark' ? 'text-white' : 'text-zinc-900'}`}>{item.product.name}</h4>
                 </div>
-                <div className={`font-black text-base md:text-2xl text-glow`}>R$ {item.product.price.toFixed(2)}</div>
+                <div className={`font-black text-base md:text-2xl text-glow`}>R$ {formatPrice(item.product.price)}</div>
                 <button onClick={() => setCart((prev:any) => prev.filter((_:any,idx:any)=>idx!==i))} className="text-red-500 font-black text-2xl md:text-4xl hover:rotate-90 hover:scale-125 transition-all p-2">×</button>
               </div>
             ))}
@@ -755,7 +782,7 @@ const CartModal = ({theme, cart, setCart, onCheckout}: any) => {
           <div className={`flex flex-col md:flex-row justify-between items-center gap-8 border-t-2 pt-8 uppercase ${theme === 'dark' ? 'border-white/5' : 'border-zinc-100'}`}>
             <div className="flex flex-col text-center md:text-left">
               <span className="opacity-30 text-[10px] tracking-[0.5em] font-black mb-1">Investimento Total</span>
-              <span className={`text-4xl md:text-6xl font-black font-grotesk leading-none text-glow`}>R$ {total.toFixed(2)}</span>
+              <span className={`text-4xl md:text-6xl font-black font-grotesk leading-none text-glow`}>R$ {formatPrice(total)}</span>
             </div>
             <button onClick={onCheckout} className="w-full md:w-auto px-12 md:px-16 py-5 md:py-6 rounded-[2.5rem] btn-primary text-base md:text-xl font-black uppercase tracking-[0.3em] shadow-xl active:scale-95 transition-all shimmer">
               Finalizar Sync
@@ -768,11 +795,15 @@ const CartModal = ({theme, cart, setCart, onCheckout}: any) => {
 };
 
 const ProductDetailsView = ({theme, product, onAdd}: any) => {
+  const formatPrice = (value: number) => {
+    return value.toFixed(2).replace('.', ',');
+  };
+
   return (
     <div className="animate-fade-in py-2">
       <div className={`relative aspect-[16/9] rounded-[1.5rem] md:rounded-[2.5rem] flex items-center justify-center overflow-hidden mb-6 md:mb-8 border-2 transition-all duration-1000 hover:scale-[1.01] ${theme === 'dark' ? 'bg-zinc-950 border-[#00ff88]/40 shadow-[0_0_60px_rgba(0,255,136,0.1)]' : 'bg-white border-[#ff5e00]/40 shadow-[0_0_60px_rgba(255,94,0,0.15)]'}`}>
         {product.customImageUrl || product.customImageData ? (
-          <img src={product.customImageUrl || product.customImageData} className="w-full h-full object-cover" />
+          <img src={product.customImageUrl || product.customImageData} className="w-full h-full object-cover" alt={product.name} />
         ) : (
           <div className="scale-[3] opacity-20 animate-pulse-glow text-glow"><Icons.Logo className="w-12 h-12 md:w-16 md:h-16" /></div>
         )}
@@ -781,19 +812,19 @@ const ProductDetailsView = ({theme, product, onAdd}: any) => {
       <div className="flex flex-col gap-4 md:gap-6 md:px-4">
         <h3 className={`text-2xl md:text-4xl font-black font-grotesk tracking-tighter uppercase leading-none break-words text-glow`}>{product.name}</h3>
         <p className={`opacity-70 font-medium text-xs md:text-sm leading-relaxed ${theme === 'dark' ? 'text-zinc-400' : 'text-zinc-600'}`}>
-          {product.description || 'Ativo digital de alta performance auditado pela StoreHub Neural Network. Sync imediato e suporte garantido 24/7 para todos os membros certificados.'}
+          {product.description || 'Ativo digital de alta performance auditado pela StoreHub Neural Network. Compra imediata e suporte garantido 24/7 para todos os membros certificados.'}
         </p>
         
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pt-4 pb-6">
            <div className="flex flex-col">
-              <span className="text-[9px] md:text-[10px] font-black opacity-30 uppercase tracking-[0.6em] mb-1">Investimento Dashboard</span>
+              <span className="text-[9px] md:text-[10px] font-black opacity-30 uppercase tracking-[0.6em] mb-1">Valor do Produto</span>
               <div className="flex items-baseline gap-3">
-                <span className={`text-3xl md:text-5xl font-black font-grotesk leading-none text-glow`}>R$ {product.price.toFixed(2)}</span>
-                {product.originalPrice && product.originalPrice > product.price && <span className="text-sm md:text-base line-through opacity-50 font-bold">R$ {product.originalPrice.toFixed(2)}</span>}
+                <span className={`text-3xl md:text-5xl font-black font-grotesk leading-none text-glow`}>R$ {formatPrice(product.price)}</span>
+                {product.originalPrice && product.originalPrice > product.price && <span className="text-sm md:text-base line-through opacity-50 font-bold">R$ {formatPrice(product.originalPrice)}</span>}
               </div>
            </div>
-           <button onClick={onAdd} className={`px-6 py-4 md:px-10 md:py-5 rounded-[2rem] btn-primary font-black uppercase text-xs md:text-base tracking-[0.3em] active:scale-95 transition-all flex items-center justify-center gap-3 shimmer`}>
-             <Icons.Cart className="w-4 h-4 md:w-5 md:h-5" /> Sincronizar
+           <button onClick={onAdd} className={`px-6 py-4 md:px-10 md:py-6 rounded-[2rem] btn-primary font-black uppercase text-xs md:text-lg tracking-[0.3em] active:scale-95 transition-all flex items-center justify-center gap-3 md:gap-5 shimmer`}>
+             <Icons.Cart className="w-6 h-6 md:w-11 md:h-11" />Comprar
            </button>
         </div>
       </div>
@@ -897,7 +928,7 @@ const ProductForm = ({theme, product, onSave}: any) => {
       <div className="flex justify-center mb-6">
         <label className={`w-full aspect-[2/1] rounded-[2rem] border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all hover:bg-black/5 overflow-hidden group relative ${theme === 'dark' ? 'border-white/20 hover:border-[#00ff88]' : 'border-zinc-300 hover:border-[#ff5e00]'}`}>
           {d.customImageData || d.customImageUrl ? (
-            <img src={d.customImageData || d.customImageUrl} className={`w-full h-full object-cover ${d.outOfStock ? 'grayscale opacity-50' : ''}`} />
+            <img src={d.customImageData || d.customImageUrl} className={`w-full h-full object-cover ${d.outOfStock ? 'grayscale opacity-50' : ''}`} alt="Review" />
           ) : (
              <div className="flex flex-col items-center gap-2 opacity-50 group-hover:opacity-100 transition-opacity">
                <Icons.Upload className={`w-8 h-8 ${themeText}`} />
